@@ -17,16 +17,24 @@
 package org.quiltmc.qsl.resource.loader.impl;
 
 
+import com.google.gson.Gson;
+import com.google.gson.JsonElement;
+import net.fabricmc.api.EnvType;
 import net.minecraft.resource.Resource;
 import net.minecraft.resource.ResourceType;
 import net.minecraft.resource.pack.NioResourcePack;
 import net.minecraft.resource.pack.ResourcePack;
 import net.minecraft.resource.pack.ZipResourcePack;
 import net.minecraft.util.Identifier;
+import net.minecraft.util.JsonHelper;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 import org.quiltmc.loader.api.QuiltLoader;
+import org.quiltmc.loader.api.minecraft.MinecraftQuiltLoader;
 import org.quiltmc.qsl.resource.loader.api.StaticResourceLoader;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.io.*;
 import java.nio.file.Path;
@@ -39,16 +47,16 @@ public class StaticResourceLoaderImpl implements StaticResourceLoader {
 
 	private static StaticResourceLoaderImpl resourcesInstance = null;
 	private static StaticResourceLoaderImpl dataInstance = null;
-
+	private static final Logger LOGGER = LoggerFactory.getLogger("QuiltStaticResourceLoaderImpl");
+	private static final Gson GSON = new Gson();
 	private static final String DATA_PATH_HEAD = "static/data";
 	private static final String RESOURCES_PATH_HEAD = "static/resources";
-
 	private static final int PACK_DEPTH = 3;
-
 	private final StaticResourceManager manager;
 
 	public static StaticResourceLoaderImpl get(ResourceType type) {
 		if(type.equals(ResourceType.CLIENT_RESOURCES)) {
+			if(!MinecraftQuiltLoader.getEnvironmentType().equals(EnvType.CLIENT)) throw new RuntimeException("Static resources in 'static/resources' are client-only.");
 			if(Objects.isNull(resourcesInstance)) {
 				resourcesInstance = new StaticResourceLoaderImpl(type);
 			}
@@ -96,7 +104,6 @@ public class StaticResourceLoaderImpl implements StaticResourceLoader {
 	public List<Resource> getAllResources(Identifier id) {
 		return manager.getAllResources(id);
 	}
-
 	@Override
 	public Set<String> getNamespaces() {
 		return manager.getAllNamespaces();
@@ -108,8 +115,13 @@ public class StaticResourceLoaderImpl implements StaticResourceLoader {
 	}
 
 	@Override
-	public Map<Identifier, List<Resource>> findResources(String startingPath, Predicate<Identifier> pathFilter) {
+	public Map<Identifier, List<Resource>> findAllResources(String startingPath, Predicate<Identifier> pathFilter) {
 		return manager.findAllResources(startingPath, pathFilter);
+	}
+
+	@Override
+	public Map<Identifier, Resource> findResources(String startingPath, Predicate<Identifier> pathFilter) {
+		return manager.findResources(startingPath, pathFilter);
 	}
 
 	@Override
@@ -135,5 +147,27 @@ public class StaticResourceLoaderImpl implements StaticResourceLoader {
 	@Override
 	public BufferedReader openAsReader(Identifier id) throws IOException {
 		return manager.openAsReader(id);
+	}
+
+	@Override
+	public Map<Identifier, JsonElement> findJsonObjects(@Nullable String namespace, @Nullable String startingPath) {
+		String nullablePath = Objects.isNull(startingPath) ? "" : startingPath;
+		Map<Identifier, Resource> resourceMap = manager.findResources(nullablePath, identifier -> {
+			boolean namespaceTest = Objects.isNull(namespace) || namespace.equals("") || namespace.equals(identifier.getNamespace());
+			if(namespaceTest) {
+				return identifier.getPath().endsWith(".json");
+			} else return false;
+		});
+		Map<Identifier, JsonElement> returnMap = new HashMap<>();
+		for(Map.Entry<Identifier, Resource> entry : resourceMap.entrySet()) {
+			Resource resource = entry.getValue();
+			try(BufferedReader reader = resource.openBufferedReader()) {
+				JsonElement element = JsonHelper.deserialize(GSON, reader, JsonElement.class);
+				returnMap.put(entry.getKey(), element);
+			} catch (Exception e) {
+				LOGGER.warn("Exception caught during static json loading: " + e.getMessage());
+			}
+		}
+		return returnMap;
 	}
 }

@@ -16,6 +16,7 @@
 
 package org.quiltmc.qsl.resource.loader.api;
 
+import com.google.gson.JsonElement;
 import net.minecraft.resource.Resource;
 import net.minecraft.resource.ResourceType;
 import net.minecraft.resource.pack.ResourcePack;
@@ -33,6 +34,12 @@ import java.util.Set;
 import java.util.function.Predicate;
 import java.util.stream.Stream;
 
+/**
+ * Resource loader for the Static Resources API.<br>
+ * Unlike 'regular' resources loaded through vanilla's resource loader and {@link ResourceLoader},
+ * static resources are accessible <i>as soon as a StaticResourceLoader instance exists to get them,</i>
+ * and are
+ */
 public interface StaticResourceLoader {
 
 	static StaticResourceLoader get(ResourceType type){
@@ -41,11 +48,13 @@ public interface StaticResourceLoader {
 	List<Resource> getAllResources(Identifier id);
 	Set<String> getNamespaces();
 	List<ResourcePack> getPacks();
-	Map<Identifier, List<Resource>> findResources(String startingPath, Predicate<Identifier> pathFilter);
+	Map<Identifier, List<Resource>> findAllResources(String startingPath, Predicate<Identifier> pathFilter);
+	Map<Identifier, Resource> findResources(String startingPath, Predicate<Identifier> pathFilter);
 	Stream<ResourcePack> streamPacks();
 	Optional<Resource> getResource(Identifier id);
 	Resource getResourceOrThrow(Identifier id) throws FileNotFoundException;
 	InputStream open(Identifier id) throws IOException;
 	BufferedReader openAsReader(Identifier id) throws IOException;
+	Map<Identifier, JsonElement> findJsonObjects(String namespace, String startingPath);
 
 }
