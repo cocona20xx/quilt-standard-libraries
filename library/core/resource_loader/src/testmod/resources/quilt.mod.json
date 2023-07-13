@@ -14,7 +14,8 @@
       "init": [
         "org.quiltmc.qsl.resource.loader.test.BuiltinResourcePackTestMod",
         "org.quiltmc.qsl.resource.loader.test.ResourceReloaderTestMod",
-        "org.quiltmc.qsl.resource.loader.test.VirtualResourcePackTestMod"
+        "org.quiltmc.qsl.resource.loader.test.VirtualResourcePackTestMod",
+        "org.quiltmc.qsl.resource.loader.test.StaticResourcesTestMod"
       ],
       "client_init": [
         "org.quiltmc.qsl.resource.loader.test.client.ResourcePackProfileProviderTestMod"

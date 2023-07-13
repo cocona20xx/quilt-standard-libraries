@@ -38,16 +38,44 @@ import java.util.stream.Stream;
  * Resource loader for the Static Resources API.<br>
  * Unlike 'regular' resources loaded through vanilla's resource loader and {@link ResourceLoader},
  * static resources are accessible <i>as soon as a StaticResourceLoader instance exists to get them,</i>
- * and are
+ * and are never reloaded.
  */
 public interface StaticResourceLoader {
-
-	static StaticResourceLoader get(ResourceType type){
+	/**
+	 * Gets the StaticResourceLoader instance for a given {@link ResourceType}.
+	 * @param type the resource type for which the corresponding StaticResourceLoader was requested.
+	 * @return the corresponding instance of StaticResourceLoader.
+	 * @throws IllegalStateException if clientside resources are requested on the logical/dedicated server via {@link ResourceType#CLIENT_RESOURCES}.
+	 */
+	static StaticResourceLoader get(ResourceType type) throws IllegalStateException {
 		return StaticResourceLoaderImpl.get(type);
 	}
+
+	/**
+	 * Gets all static {@link Resource}s in this loader that correspond to an {@link Identifier}.
+	 * @param id the identifier to get resources for.
+	 * @return a list of resources corresponding to the passed id, or an empty list ({@link List#of()}) if no such resources exist.
+	 */
 	List<Resource> getAllResources(Identifier id);
+
+	/**
+	 * Gets the namespaces found within this loader.<br>
+	 * @return the namespaces, as {@link String}s.
+	 */
 	Set<String> getNamespaces();
+
+	/**
+	 * Gets the {@link ResourcePack} objects loaded by this loader.
+	 * @return the list of packs.
+	 */
 	List<ResourcePack> getPacks();
+
+	/**
+	 * Finds all resources corresponding to a
+	 * @param startingPath
+	 * @param pathFilter
+	 * @return
+	 */
 	Map<Identifier, List<Resource>> findAllResources(String startingPath, Predicate<Identifier> pathFilter);
 	Map<Identifier, Resource> findResources(String startingPath, Predicate<Identifier> pathFilter);
 	Stream<ResourcePack> streamPacks();
@@ -55,6 +83,6 @@ public interface StaticResourceLoader {
 	Resource getResourceOrThrow(Identifier id) throws FileNotFoundException;
 	InputStream open(Identifier id) throws IOException;
 	BufferedReader openAsReader(Identifier id) throws IOException;
-	Map<Identifier, JsonElement> findJsonObjects(String namespace, String startingPath);
+	Map<Identifier, JsonElement> findJsonElements(String namespace, String startingPath);
 
 }

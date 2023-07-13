@@ -103,7 +103,7 @@ class StaticResourceManager implements AutoCloseableResourceManager {
 	@Override
 	public Resource getResourceOrThrow(Identifier identifier) throws FileNotFoundException {
 		Optional<Resource> getResourceResult = getResource(identifier);
-		if(getResourceResult.isEmpty()) throw new FileNotFoundException("No resource found at id " + identifier);
+		if(getResourceResult.isEmpty()) throw new FileNotFoundException("No resource found at id {}" + identifier);
 		else return getResourceResult.get();
 	}
 
@@ -123,7 +123,8 @@ class StaticResourceManager implements AutoCloseableResourceManager {
 	}
 
 	/**
-	 * Based heavily on {@link MultiPackResourceManagerMixin#quilt$recomputeNamespaces()}
+	 * Based heavily on {@link MultiPackResourceManagerMixin#quilt$recomputeNamespaces()} and the equivalent code in {@link MultiPackResourceManager}'s init function.<br>
+	 * While this function could be inlined, it is kept here for readability.
 	 */
 	private void computeNamespaces(){
 		this.namespaceManagers.clear();
