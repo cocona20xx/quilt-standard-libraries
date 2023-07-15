@@ -51,6 +51,15 @@ public interface ResourceLoader {
 		return ResourceLoaderImpl.get(type);
 	}
 
+	/**
+	 * Gets the static resource manager for a given type.<br>
+	 * Static resources are different from regular resources in that they
+	 * are available as soon as the manager is requested and are (theoretically) immutable.<br>
+	 * It is <i>highly</i> recommended for mods to personally cache data they get from the provided manager in order to
+	 * prevent changes to userspace packs modifying data at runtime.
+	 * @param type the given resource type
+	 * @return the static resource manager instance
+	 */
 	static @NotNull StaticResourceManager getStaticResourceManager(@NotNull ResourceType type){
 		return ResourceLoaderImpl.getStaticResourceManager(type);
 	}
