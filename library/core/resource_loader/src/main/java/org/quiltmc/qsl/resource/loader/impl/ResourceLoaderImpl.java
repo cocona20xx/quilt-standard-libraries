@@ -572,14 +572,7 @@ public final class ResourceLoaderImpl implements ResourceLoader {
 	private static List<ResourcePack> generateStaticPackList(ResourceType type) {
 		boolean isClient = type.equals(ResourceType.CLIENT_RESOURCES);
 		List<ResourcePack> returnList = new ArrayList<>();
-		Set<String> userspacePackNames = new HashSet<>(isClient ? CLIENT_USERSPACE_STATIC_PACKS.keySet() : SERVER_USERSPACE_STATIC_PACKS.keySet());
-		//userspace-provided packs with the same name as a mod-provided pack take priority
-		//TODO: add a way for mods to add static packs that always exist, regardless of userspace packs; perhaps in a specific namespace shared by all mods?
-		for(String packName : isClient ? CLIENT_MOD_STATIC_PACKS.keySet() : SERVER_MOD_STATIC_PACKS.keySet()){
-			if(!userspacePackNames.contains(packName)){
-				returnList.add(isClient ? CLIENT_MOD_STATIC_PACKS.get(packName) : SERVER_MOD_STATIC_PACKS.get(packName));
-			}
-		}
+		returnList.addAll(isClient ? CLIENT_MOD_STATIC_PACKS.values() : SERVER_MOD_STATIC_PACKS.values());
 		returnList.addAll(isClient ? CLIENT_USERSPACE_STATIC_PACKS.values() : SERVER_USERSPACE_STATIC_PACKS.values());
 		return returnList;
 
