@@ -44,7 +44,7 @@ import org.quiltmc.qsl.resource.loader.impl.QuiltMultiPackResourceManagerHooks;
 import org.quiltmc.qsl.resource.loader.impl.ResourceLoaderImpl;
 
 @Mixin(MultiPackResourceManager.class)
-public abstract class MultiPackResourceManagerMixin implements QuiltMultiPackResourceManagerHooks {
+public abstract class MultiPackResourceManagerMixin implements QuiltMultiPackResourceManagerHooks, StaticResourceManagerWrapper {
 	@Mutable
 	@Shadow
 	@Final
@@ -77,15 +77,16 @@ public abstract class MultiPackResourceManagerMixin implements QuiltMultiPackRes
 	@SuppressWarnings("ConstantConditions")
 	@Override
 	public void quilt$appendTopPacks() {
+		if(StaticResourceManagerWrapper.quilt$wrapAndCheck(this)) return;
 		if (!(this.packs instanceof ArrayList<ResourcePack>)) {
 			this.packs = new ArrayList<>(this.packs);
 		}
-
 		ResourceLoaderImpl.get(this.quilt$type).appendTopPacks((MultiPackResourceManager) (Object) this, this.packs::add);
 	}
 
 	@Override
 	public void quilt$recomputeNamespaces() {
+		if(StaticResourceManagerWrapper.quilt$wrapAndCheck(this)) return;
 		this.namespaceManagers.clear();
 		List<String> namespaces = this.packs.stream().flatMap(pack -> pack.getNamespaces(this.quilt$type).stream()).distinct().toList();
 

@@ -18,6 +18,7 @@ package org.quiltmc.qsl.resource.loader.api;
 
 import java.nio.file.Path;
 
+import net.minecraft.resource.MultiPackResourceManager;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
@@ -60,7 +61,7 @@ public interface ResourceLoader {
 	 * @param type the given resource type
 	 * @return the static resource manager instance
 	 */
-	static @NotNull StaticResourceManager getStaticResourceManager(@NotNull ResourceType type){
+	static @NotNull MultiPackResourceManager getStaticResourceManager(@NotNull ResourceType type){
 		return ResourceLoaderImpl.getStaticResourceManager(type);
 	}
 

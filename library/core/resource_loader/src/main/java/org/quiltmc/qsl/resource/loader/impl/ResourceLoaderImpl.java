@@ -131,8 +131,8 @@ public final class ResourceLoaderImpl implements ResourceLoader {
 
 	public static StaticResourceManager getStaticResourceManager(ResourceType type) {
 		return STATIC_MANAGER_MAP.computeIfAbsent(type, passedType -> {
-			List<ResourcePack> packs = findUserStaticPacksForType(passedType);
-			appendModResourcePacks(packs, passedType, STATIC_PACK_ROOT + "/" + passedType.getDirectory());
+			List<ResourcePack> packs = findUserStaticPacks();
+			appendModResourcePacks(packs, passedType, STATIC_PACK_ROOT);
 			return new StaticResourceManager(passedType, packs);
 		});
 	}
@@ -538,10 +538,9 @@ public final class ResourceLoaderImpl implements ResourceLoader {
 	}
 
 	/* Static pack stuff */
-	private static List<ResourcePack> findUserStaticPacksForType(ResourceType type) {
+	private static List<ResourcePack> findUserStaticPacks() {
 		List<ResourcePack> returnList = new ArrayList<>();
-		String pathHead = STATIC_PACK_ROOT + "/" + type.getDirectory();
-		File directoryFile = QuiltLoader.getGameDir().resolve(pathHead).toFile();
+		File directoryFile = QuiltLoader.getGameDir().resolve(STATIC_PACK_ROOT).toFile();
 		File[] potentialPackFiles = directoryFile.listFiles(filterFile -> {
 			//path should be exactly 1 name longer than directoryFile path if in the correct location for a pack
 			return filterFile.toPath().getNameCount() - directoryFile.toPath().getNameCount() == 1;
@@ -554,7 +553,10 @@ public final class ResourceLoaderImpl implements ResourceLoader {
 						returnList.add(new ZipResourcePack(n, file, false));
 					}
 					else
-						LOGGER.error("Files outside of packs are not supported by the Quilt Static Resource Loader. Loose file: {}", file);
+						if(!file.getName().equals(".DS_Store")) {
+							//silently ignore file system helper files like .DS_Store
+							LOGGER.error("Files outside of packs are not supported by the Quilt Static Resource Manager. Loose file: {}", file);
+						}
 				} else if(file.isDirectory()) {
 					returnList.add(new NioResourcePack(n, file.toPath(), false));
 				}
