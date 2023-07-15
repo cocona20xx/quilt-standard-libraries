@@ -34,7 +34,6 @@ import org.quiltmc.loader.api.QuiltLoader;
 import org.quiltmc.qsl.base.api.event.Event;
 import org.quiltmc.qsl.resource.loader.api.reloader.IdentifiableResourceReloader;
 import org.quiltmc.qsl.resource.loader.impl.ResourceLoaderImpl;
-import org.quiltmc.qsl.resource.loader.impl.StaticResourceManager;
 
 /**
  * Represents the resource loader. Contains different register methods.

@@ -17,7 +17,8 @@
 package org.quiltmc.qsl.resource.loader.impl;
 
 
-import net.minecraft.resource.*;
+import net.minecraft.resource.MultiPackResourceManager;
+import net.minecraft.resource.ResourceType;
 import net.minecraft.resource.pack.ResourcePack;
 import org.jetbrains.annotations.ApiStatus;
 

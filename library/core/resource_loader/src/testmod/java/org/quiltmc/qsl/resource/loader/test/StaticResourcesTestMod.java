@@ -17,14 +17,26 @@ import org.quiltmc.qsl.resource.loader.api.ResourceLoader;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.io.BufferedReader;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.function.Predicate;
 
 public class StaticResourcesTestMod implements ModInitializer {
-	public static final Logger LOGGER = LoggerFactory.getLogger("QuiltStaticResourcesTestMod");
+	public static final Logger LOGGER = LoggerFactory.getLogger("QuiltStaticResourcesTest");
 	@Override
 	public void onInitialize(ModContainer mod) {
+
+		try {
+			MultiPackResourceManager clientManager = ResourceLoader.getStaticResourceManager(ResourceType.CLIENT_RESOURCES);
+			Resource cronch = clientManager.getResource(new Identifier("cronch", "test_client")).get();
+			BufferedReader readerCronch = cronch.openBufferedReader();
+			LOGGER.error(readerCronch.readLine() + "(Reading this line should be impossible!)");
+			readerCronch.close();
+		} catch (Exception e) {
+			LOGGER.info("As anticipated, clientside resource fetch failed on logical server. Exception: {}", e.toString());
+		}
+
 		MultiPackResourceManager staticManager = ResourceLoader.getStaticResourceManager(ResourceType.SERVER_DATA);
 		LOGGER.info("Loaded static namespaces: {}", staticManager.getAllNamespaces());
 		Map<Identifier, Resource> blockRes = staticManager.findResources("add_block", identifier -> true);
