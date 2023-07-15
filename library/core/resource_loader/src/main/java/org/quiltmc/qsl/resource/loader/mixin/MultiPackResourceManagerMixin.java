@@ -24,6 +24,7 @@ import java.util.function.Predicate;
 import java.util.stream.Collectors;
 
 import org.jetbrains.annotations.Nullable;
+import org.quiltmc.qsl.resource.loader.impl.StaticResourceManagerWrapper;
 import org.spongepowered.asm.mixin.Final;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Mutable;
@@ -69,7 +70,8 @@ public abstract class MultiPackResourceManagerMixin implements QuiltMultiPackRes
 	private List<ResourcePack> quilt$createPackList(List<ResourcePack> packs, ResourceType type) {
 		this.quilt$type = type;
 
-		return packs.stream().mapMulti(ResourceLoaderImpl::flattenPacks).collect(Collectors.toCollection(ArrayList::new));
+		if(StaticResourceManagerWrapper.quilt$wrapAndCheck(this)) return packs;
+		else return packs.stream().mapMulti(ResourceLoaderImpl::flattenPacks).collect(Collectors.toCollection(ArrayList::new));
 	}
 
 	@SuppressWarnings("ConstantConditions")

@@ -17,22 +17,11 @@
 
 package org.quiltmc.qsl.resource.loader.impl;
 
-import java.io.BufferedReader;
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.InputStreamReader;
+import java.io.*;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.util.ArrayList;
-import java.util.EnumMap;
-import java.util.Iterator;
-import java.util.LinkedHashSet;
-import java.util.List;
-import java.util.Locale;
-import java.util.Map;
-import java.util.Objects;
-import java.util.Set;
+import java.util.*;
 import java.util.function.Consumer;
 import java.util.stream.Collectors;
 
@@ -41,6 +30,7 @@ import it.unimi.dsi.fastutil.objects.Object2ObjectOpenHashMap;
 import it.unimi.dsi.fastutil.objects.ObjectOpenHashSet;
 import it.unimi.dsi.fastutil.objects.Reference2ObjectOpenHashMap;
 import net.fabricmc.api.EnvType;
+import net.minecraft.resource.pack.*;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -50,9 +40,6 @@ import org.slf4j.LoggerFactory;
 import net.minecraft.resource.MultiPackResourceManager;
 import net.minecraft.resource.ResourceReloader;
 import net.minecraft.resource.ResourceType;
-import net.minecraft.resource.pack.ResourcePack;
-import net.minecraft.resource.pack.ResourcePackProfile;
-import net.minecraft.resource.pack.ResourcePackProvider;
 import net.minecraft.resource.pack.metadata.ResourceMetadataReader;
 import net.minecraft.text.Text;
 import net.minecraft.util.Identifier;
@@ -81,6 +68,8 @@ import org.quiltmc.qsl.resource.loader.mixin.VanillaDataPackProviderAccessor;
  */
 @ApiStatus.Internal
 public final class ResourceLoaderImpl implements ResourceLoader {
+
+	private static final String STATIC_PACK_ROOT = "static";
 	private static final Map<ResourceType, ResourceLoaderImpl> IMPL_MAP = new EnumMap<>(ResourceType.class);
 	/**
 	 * Represents a cache of the client mod resource packs so resource packs that can cache don't lose their cache.
@@ -92,6 +81,10 @@ public final class ResourceLoaderImpl implements ResourceLoader {
 	private static final Map<String, List<ModNioResourcePack>> SERVER_MOD_RESOURCE_PACKS = new Object2ObjectOpenHashMap<>();
 	private static final Map<String, ModNioResourcePack> CLIENT_BUILTIN_RESOURCE_PACKS = new Object2ObjectOpenHashMap<>();
 	private static final Map<String, ModNioResourcePack> SERVER_BUILTIN_RESOURCE_PACKS = new Object2ObjectOpenHashMap<>();
+	private static final Map<String, ModNioResourcePack> CLIENT_MOD_STATIC_PACKS = new Object2ObjectOpenHashMap<>();
+	private static final Map<String, ModNioResourcePack> SERVER_MOD_STATIC_PACKS = new Object2ObjectOpenHashMap<>();
+	private static final Map<String, ResourcePack> CLIENT_USERSPACE_STATIC_PACKS = new Object2ObjectOpenHashMap<>();
+	private static final Map<String, ResourcePack> SERVER_USERSPACE_STATIC_PACKS = new Object2ObjectOpenHashMap<>();
 	private static final Logger LOGGER = LoggerFactory.getLogger("ResourceLoader");
 
 	private static final boolean DEBUG_RELOADERS_IDENTITY = TriState.fromProperty("quilt.resource_loader.debug.reloaders_identity")
@@ -100,11 +93,11 @@ public final class ResourceLoaderImpl implements ResourceLoader {
 			.toBooleanOrElse(false);
 
 	private final ResourceType type;
+	private final StaticResourceManager staticResourceManager;
 	private final Set<Identifier> addedReloaderIds = new ObjectOpenHashSet<>();
 	private final Set<IdentifiableResourceReloader> addedReloaders = new LinkedHashSet<>();
 	private final Set<Pair<Identifier, Identifier>> reloadersOrdering = new LinkedHashSet<>();
 	final Set<ResourcePackProvider> resourcePackProfileProviders = new ObjectOpenHashSet<>();
-
 	private final Event<ResourcePackRegistrationContext.Callback> defaultResourcePackRegistrationEvent = createResourcePackRegistrationEvent();
 	private final Event<ResourcePackRegistrationContext.Callback> topResourcePackRegistrationEvent = createResourcePackRegistrationEvent();
 
@@ -118,10 +111,22 @@ public final class ResourceLoaderImpl implements ResourceLoader {
 
 	public ResourceLoaderImpl(ResourceType type) {
 		this.type = type;
+		if (type.equals(ResourceType.CLIENT_RESOURCES)) {
+			CLIENT_USERSPACE_STATIC_PACKS.putAll(findUserStaticPacksForType(type));
+		} else {
+			SERVER_USERSPACE_STATIC_PACKS.putAll(findUserStaticPacksForType(type));
+		}
+		//TODO: find unregistered mod static packs, warn about not using registered packs if in dev env
+		this.staticResourceManager = new StaticResourceManager(type, generateStaticPackList(type));
 	}
 
 	public static ResourceLoaderImpl get(ResourceType type) {
 		return IMPL_MAP.computeIfAbsent(type, ResourceLoaderImpl::new);
+	}
+
+	@Override
+	public StaticResourceManager getStaticResourceManager() {
+		return this.staticResourceManager;
 	}
 
 	public static <T> @Nullable T parseMetadata(ResourceMetadataReader<T> metaReader, ResourcePack pack, InputStream inputStream) {
@@ -198,6 +203,16 @@ public final class ResourceLoaderImpl implements ResourceLoader {
 	@Override
 	public @NotNull Event<ResourcePackRegistrationContext.Callback> getRegisterTopResourcePackEvent() {
 		return this.topResourcePackRegistrationEvent;
+	}
+
+	@Override
+	public @NotNull ResourcePack registerNewFileSystemStaticPack(@NotNull Identifier id, @NotNull ModContainer owner, @NotNull Path rootPath) {
+		String name = id.getNamespace() + '/' + id.getPath();
+		ModNioResourcePack pack = new ModNioResourcePack(name, owner.metadata(), null, ResourcePackActivationType.ALWAYS_ENABLED, rootPath, this.type, null);
+		if(this.type.equals(ResourceType.CLIENT_RESOURCES)) {
+			CLIENT_MOD_STATIC_PACKS.put(name, pack);
+		} else SERVER_MOD_STATIC_PACKS.put(name, pack);
+		return pack;
 	}
 
 	@Override
@@ -523,4 +538,51 @@ public final class ResourceLoaderImpl implements ResourceLoader {
 			}
 		}
 	}
+
+	/* Static pack stuff */
+	private static Object2ObjectOpenHashMap<String, ResourcePack> findUserStaticPacksForType(ResourceType type) {
+		Object2ObjectOpenHashMap<String, ResourcePack> returnMap = new Object2ObjectOpenHashMap<>();
+		String pathHead = type.equals(ResourceType.CLIENT_RESOURCES) ? STATIC_PACK_ROOT + "/assets" : STATIC_PACK_ROOT + "/data";
+		File directoryFile = QuiltLoader.getGameDir().resolve(pathHead).toFile();
+		File[] potentialPackFiles = directoryFile.listFiles(filterFile -> {
+			//path should be exactly 1 name longer than directoryFile path if in the correct location for a pack
+			return filterFile.toPath().getNameCount() - directoryFile.toPath().getNameCount() == 1;
+		});
+		if(Objects.nonNull(potentialPackFiles)) {
+			for(File file : potentialPackFiles) {
+				String n = calcUserspacePackName(file);
+				if(file.isFile()) {
+					if (file.toPath().toString().endsWith(".zip")){
+						returnMap.put(n, new ZipResourcePack(n, file, false));
+					}
+					else
+						LOGGER.error("Files outside of packs are not supported by the Quilt Static Resource Loader. Loose file: {}", file);
+				} else if(file.isDirectory()) {
+					returnMap.put(n, new NioResourcePack(n, file.toPath(), false));
+				}
+			}
+		}
+		return returnMap;
+	}
+	private static String calcUserspacePackName(File packFile) {
+		int n = packFile.toPath().getNameCount();
+		return packFile.toPath().getName(n - 2) + "/" + packFile.toPath().getName(n - 1);
+	}
+
+	private static List<ResourcePack> generateStaticPackList(ResourceType type) {
+		boolean isClient = type.equals(ResourceType.CLIENT_RESOURCES);
+		List<ResourcePack> returnList = new ArrayList<>();
+		Set<String> userspacePackNames = new HashSet<>(isClient ? CLIENT_USERSPACE_STATIC_PACKS.keySet() : SERVER_USERSPACE_STATIC_PACKS.keySet());
+		//userspace-provided packs with the same name as a mod-provided pack take priority
+		//TODO: add a way for mods to add static packs that always exist, regardless of userspace packs; perhaps in a specific namespace shared by all mods?
+		for(String packName : isClient ? CLIENT_MOD_STATIC_PACKS.keySet() : SERVER_MOD_STATIC_PACKS.keySet()){
+			if(!userspacePackNames.contains(packName)){
+				returnList.add(isClient ? CLIENT_MOD_STATIC_PACKS.get(packName) : SERVER_MOD_STATIC_PACKS.get(packName));
+			}
+		}
+		returnList.addAll(isClient ? CLIENT_USERSPACE_STATIC_PACKS.values() : SERVER_USERSPACE_STATIC_PACKS.values());
+		return returnList;
+
+	}
+
 }

@@ -5,7 +5,6 @@ import net.minecraft.resource.ResourceType;
 import net.minecraft.util.Identifier;
 import org.quiltmc.loader.api.ModContainer;
 import org.quiltmc.qsl.base.api.entrypoint.ModInitializer;
-import org.quiltmc.qsl.resource.loader.api.StaticResourceLoader;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 

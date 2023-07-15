@@ -33,6 +33,7 @@ import org.quiltmc.loader.api.QuiltLoader;
 import org.quiltmc.qsl.base.api.event.Event;
 import org.quiltmc.qsl.resource.loader.api.reloader.IdentifiableResourceReloader;
 import org.quiltmc.qsl.resource.loader.impl.ResourceLoaderImpl;
+import org.quiltmc.qsl.resource.loader.impl.StaticResourceManager;
 
 /**
  * Represents the resource loader. Contains different register methods.
@@ -49,6 +50,8 @@ public interface ResourceLoader {
 	static @NotNull ResourceLoader get(@NotNull ResourceType type) {
 		return ResourceLoaderImpl.get(type);
 	}
+
+	StaticResourceManager getStaticResourceManager();
 
 	/**
 	 * Register a resource reloader for a given resource manager type.
@@ -101,6 +104,30 @@ public interface ResourceLoader {
 	 */
 	@Contract(pure = true)
 	@NotNull Event<ResourcePackRegistrationContext.Callback> getRegisterTopResourcePackEvent();
+
+	/**
+	 * Create and register a new static resource pack based on a {@link Path} as its root.
+	 * @param id 		the identifier of the resource pack; its namespace must be the same as the mod ID
+	 * @param rootPath	the root path of this resource pack
+	 * @return the newly created and registered pack instance
+	 * @see ResourceLoader#registerNewFileSystemStaticPack(Identifier, ModContainer, Path)
+	 */
+	@NotNull default ResourcePack registerNewFileSystemStaticPack(@NotNull Identifier id, @NotNull Path rootPath){
+		ModContainer container = QuiltLoader.getModContainer(id.getNamespace())
+			.orElseThrow(() -> new IllegalArgumentException("No mod with ID '" + id.getNamespace() + "' could be found"));
+		return this.registerNewFileSystemStaticPack(id, container, rootPath);
+	}
+
+
+	/**
+	 * Create and register a new static resource pack based on a {@link Path} as its root.
+	 * @param id 		the identifier of the resource pack
+	 * @param owner 	the mod which owns this resource pack
+	 * @param rootPath	the root path of this resource pack
+	 * @return the newly created and registered pack instance
+	 * @see ResourceLoader#registerNewFileSystemStaticPack(Identifier, Path)
+	 */
+	@NotNull ResourcePack registerNewFileSystemStaticPack(@NotNull Identifier id, @NotNull ModContainer owner, @NotNull Path rootPath);
 
 	/**
 	 * Creates a new resource pack based on a {@link Path} as its root.
