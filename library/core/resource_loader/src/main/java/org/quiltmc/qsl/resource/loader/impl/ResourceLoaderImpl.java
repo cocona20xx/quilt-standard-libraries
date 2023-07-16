@@ -86,7 +86,7 @@ import org.quiltmc.qsl.resource.loader.mixin.VanillaDataPackProviderAccessor;
 @ApiStatus.Internal
 public final class ResourceLoaderImpl implements ResourceLoader {
 	private static final String STATIC_PACK_ROOT = "static";
-	private static final Set<String> STATIC_USERSPACE_IGNORED_FILES = Set.of(".DS_Store", "thumbs.db");
+	private static final Set<String> STATIC_USERSPACE_IGNORED_FILES = Set.of(".DS_Store", "thumbs.db", "desktop.ini", ".desktop");
 	private static final Map<ResourceType, StaticResourceManager> STATIC_MANAGER_MAP = new EnumMap<>(ResourceType.class);
 	private static final Map<ResourceType, ResourceLoaderImpl> IMPL_MAP = new EnumMap<>(ResourceType.class);
 	/**
@@ -549,8 +549,20 @@ public final class ResourceLoaderImpl implements ResourceLoader {
 					if (pathAsFile.toPath().toString().endsWith(".zip")) {
 						returnList.add(new ZipResourcePack(n, pathAsFile, false));
 					} else {
-						if (!STATIC_USERSPACE_IGNORED_FILES.contains(pathAsFile.getName())) {
-							//Ignores filesystem helper files, currently ignoring .DS_Store and thumbs.db
+						boolean fsHelper = false;
+						for (String fs : STATIC_USERSPACE_IGNORED_FILES) {
+							// Implementation detail: ._* and (some) *nix-derivative OSes (macOS, Linux distros, etc)
+							// ._* is a rare *nix filesystem helper file created to store file information normally placed in an extended attribute
+							// on HFS+ (Apple Native, typically found under macOS) or UFS (other *nix OSes) filesystems when interfacing with a filesystem
+							// that does NOT support such extended attributes (for instance, a FAT32 drive). Since these can have names of arbitrary lengths,
+							// the only way to detect them is via the shared prefix.
+							// Source: https://apple.stackexchange.com/a/14981
+							if (fs.equalsIgnoreCase(pathAsFile.getName()) || pathAsFile.getName().startsWith("._")) {
+								fsHelper = true;
+								break;
+							}
+						}
+						if (!fsHelper) {
 							LOGGER.error("Files outside of packs are not supported by the Quilt Static Resource Manager. Loose file: {}", pathAsFile);
 							LOGGER.error("If the loose file above is a filesystem helper for the in-use Operating System, please make an issue report on the QSL github: https://github.com/QuiltMC/quilt-standard-libraries/issues");
 						}
