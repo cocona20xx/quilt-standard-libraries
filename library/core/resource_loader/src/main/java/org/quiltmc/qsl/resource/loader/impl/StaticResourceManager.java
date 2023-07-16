@@ -16,27 +16,21 @@
 
 package org.quiltmc.qsl.resource.loader.impl;
 
+import java.util.List;
+
+import org.jetbrains.annotations.ApiStatus;
 
 import net.minecraft.resource.MultiPackResourceManager;
 import net.minecraft.resource.ResourceType;
 import net.minecraft.resource.pack.ResourcePack;
-import org.jetbrains.annotations.ApiStatus;
-
-import java.util.List;
-
 
 /**
  * Exists solely for determining whether a manager is involved in static resource loading or regular resource loading.<br>
  * This is used to avoid activating certain mixins when they are not necessary.
  */
 @ApiStatus.Internal
-public class StaticResourceManager extends MultiPackResourceManager implements StaticResourceManagerWrapper{
+public class StaticResourceManager extends MultiPackResourceManager {
 	public StaticResourceManager(ResourceType type, List<ResourcePack> packs) {
 		super(type, packs);
-	}
-
-	@Override
-	public boolean quilt$isStaticManager() {
-		return true;
 	}
 }

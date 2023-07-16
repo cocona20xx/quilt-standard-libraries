@@ -17,7 +17,6 @@
 
 package org.quiltmc.qsl.resource.loader.impl;
 
-
 import java.io.BufferedReader;
 import java.io.File;
 import java.io.IOException;
@@ -37,23 +36,24 @@ import java.util.Objects;
 import java.util.Set;
 import java.util.function.Consumer;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 import com.google.gson.JsonObject;
 import it.unimi.dsi.fastutil.objects.Object2ObjectOpenHashMap;
 import it.unimi.dsi.fastutil.objects.ObjectOpenHashSet;
 import it.unimi.dsi.fastutil.objects.Reference2ObjectOpenHashMap;
 import net.fabricmc.api.EnvType;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.ApiStatus;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import net.minecraft.resource.pack.NioResourcePack;
 import net.minecraft.resource.pack.ResourcePack;
 import net.minecraft.resource.pack.ResourcePackProfile;
 import net.minecraft.resource.pack.ResourcePackProvider;
 import net.minecraft.resource.pack.ZipResourcePack;
-import org.jetbrains.annotations.ApiStatus;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
 import net.minecraft.resource.MultiPackResourceManager;
 import net.minecraft.resource.ResourceReloader;
 import net.minecraft.resource.ResourceType;
@@ -85,7 +85,6 @@ import org.quiltmc.qsl.resource.loader.mixin.VanillaDataPackProviderAccessor;
  */
 @ApiStatus.Internal
 public final class ResourceLoaderImpl implements ResourceLoader {
-
 	private static final String STATIC_PACK_ROOT = "static";
 	private static final Map<ResourceType, StaticResourceManager> STATIC_MANAGER_MAP = new EnumMap<>(ResourceType.class);
 	private static final Map<ResourceType, ResourceLoaderImpl> IMPL_MAP = new EnumMap<>(ResourceType.class);
@@ -105,6 +104,7 @@ public final class ResourceLoaderImpl implements ResourceLoader {
 			.toBooleanOrElse(QuiltLoader.isDevelopmentEnvironment());
 	private static final boolean DEBUG_RELOADERS_ORDER = TriState.fromProperty("quilt.resource_loader.debug.reloaders_order")
 			.toBooleanOrElse(false);
+
 	private final ResourceType type;
 	private final Set<Identifier> addedReloaderIds = new ObjectOpenHashSet<>();
 	private final Set<IdentifiableResourceReloader> addedReloaders = new LinkedHashSet<>();
@@ -280,8 +280,8 @@ public final class ResourceLoaderImpl implements ResourceLoader {
 				);
 
 				if (DEBUG_RELOADERS_IDENTITY) {
-					LOGGER.warn("The resource reloader at {} does not implement IdentifiableResourceReloader " +
-							"making ordering support more difficult for other modders.", currentReloader.getClass().getName());
+					LOGGER.warn("The resource reloader at {} does not implement IdentifiableResourceReloader"
+							+ "making ordering support more difficult for other modders.", currentReloader.getClass().getName());
 				}
 			}
 
@@ -540,27 +540,23 @@ public final class ResourceLoaderImpl implements ResourceLoader {
 	/* Static pack stuff */
 	private static List<ResourcePack> findUserStaticPacks() {
 		List<ResourcePack> returnList = new ArrayList<>();
-		File directoryFile = QuiltLoader.getGameDir().resolve(STATIC_PACK_ROOT).toFile();
-		File[] potentialPackFiles = directoryFile.listFiles(filterFile -> {
-			//path should be exactly 1 name longer than directoryFile path if in the correct location for a pack
-			return filterFile.toPath().getNameCount() - directoryFile.toPath().getNameCount() == 1;
-		});
-		if(Objects.nonNull(potentialPackFiles)) {
-			for(File file : potentialPackFiles) {
-				String n = calcUserspacePackName(file);
-				if(file.isFile()) {
-					if (file.toPath().toString().endsWith(".zip")){
-						returnList.add(new ZipResourcePack(n, file, false));
+		try (Stream<Path> walkStream = Files.walk(QuiltLoader.getGameDir().resolve(STATIC_PACK_ROOT), 1)) {
+			for (Path path : walkStream.toList()) {
+				File pathAsFile = path.toFile();
+				String n = calcUserspacePackName(pathAsFile);
+				if (pathAsFile.isFile()) {
+					if (pathAsFile.toPath().toString().endsWith(".zip")) {
+						returnList.add(new ZipResourcePack(n, pathAsFile, false));
+					} else if (!pathAsFile.getName().equals(".DS_Store")) {
+						//silently ignore filesystem helper files like .DS_Store
+						LOGGER.error("Files outside of packs are not supported by the Quilt Static Resource Manager. Loose file: {}", pathAsFile);
 					}
-					else
-						if(!file.getName().equals(".DS_Store")) {
-							//silently ignore file system helper files like .DS_Store
-							LOGGER.error("Files outside of packs are not supported by the Quilt Static Resource Manager. Loose file: {}", file);
-						}
-				} else if(file.isDirectory()) {
-					returnList.add(new NioResourcePack(n, file.toPath(), false));
+				} else if (pathAsFile.isDirectory()) {
+					returnList.add(new NioResourcePack(n, path, false));
 				}
 			}
+		} catch (IOException eio) {
+			LOGGER.error("IO Exception thrown while loading userspace static packs: {}", eio.toString());
 		}
 		return returnList;
 	}

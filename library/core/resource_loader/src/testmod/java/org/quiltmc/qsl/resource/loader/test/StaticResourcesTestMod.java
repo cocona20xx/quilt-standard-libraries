@@ -1,7 +1,14 @@
 package org.quiltmc.qsl.resource.loader.test;
 
+import java.io.BufferedReader;
+import java.util.HashMap;
+import java.util.Map;
+
 import com.google.gson.JsonElement;
 import com.google.gson.JsonParser;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import net.minecraft.block.AbstractBlock;
 import net.minecraft.block.Block;
 import net.minecraft.block.Blocks;
@@ -11,27 +18,20 @@ import net.minecraft.resource.MultiPackResourceManager;
 import net.minecraft.resource.Resource;
 import net.minecraft.resource.ResourceType;
 import net.minecraft.util.Identifier;
+
 import org.quiltmc.loader.api.ModContainer;
 import org.quiltmc.qsl.base.api.entrypoint.ModInitializer;
 import org.quiltmc.qsl.resource.loader.api.ResourceLoader;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
-import java.io.BufferedReader;
-import java.util.HashMap;
-import java.util.Map;
-import java.util.function.Predicate;
 
 public class StaticResourcesTestMod implements ModInitializer {
 	public static final Logger LOGGER = LoggerFactory.getLogger("QuiltStaticResourcesTest");
 	@Override
 	public void onInitialize(ModContainer mod) {
-
 		try {
 			MultiPackResourceManager clientManager = ResourceLoader.getStaticResourceManager(ResourceType.CLIENT_RESOURCES);
-			Resource cronch = clientManager.getResource(new Identifier("cronch", "test_client")).get();
+			Resource cronch = clientManager.getResource(new Identifier("cronch", "test_client")).orElseThrow();
 			BufferedReader readerCronch = cronch.openBufferedReader();
-			LOGGER.error(readerCronch.readLine() + "(Reading this line should be impossible!)");
+			LOGGER.error("{} (Reading this line should be impossible!)", readerCronch.readLine());
 			readerCronch.close();
 		} catch (Exception e) {
 			LOGGER.info("As anticipated, clientside resource fetch failed on logical server. Exception: {}", e.toString());
@@ -41,7 +41,7 @@ public class StaticResourcesTestMod implements ModInitializer {
 		LOGGER.info("Loaded static namespaces: {}", staticManager.getAllNamespaces());
 		Map<Identifier, Resource> blockRes = staticManager.findResources("add_block", identifier -> true);
 		Map<Identifier, JsonElement> blockElements = new HashMap<>();
-		for(Map.Entry<Identifier, Resource> r : blockRes.entrySet()){
+		for (Map.Entry<Identifier, Resource> r : blockRes.entrySet()) {
 			try {
 				JsonElement element = JsonParser.parseReader(r.getValue().openBufferedReader());
 				blockElements.put(r.getKey(), element);
@@ -49,7 +49,7 @@ public class StaticResourcesTestMod implements ModInitializer {
 				LOGGER.error(e.toString());
 			}
 		}
-		for(Map.Entry<Identifier, JsonElement> r : blockElements.entrySet()) {
+		for (Map.Entry<Identifier, JsonElement> r : blockElements.entrySet()) {
 			String blockName = r.getValue().getAsJsonObject().get("block").getAsString();
 			Registry.register(Registries.BLOCK,
 				new Identifier(r.getKey().getNamespace(), blockName),

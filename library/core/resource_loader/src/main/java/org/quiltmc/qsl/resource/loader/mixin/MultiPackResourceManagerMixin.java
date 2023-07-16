@@ -24,7 +24,6 @@ import java.util.function.Predicate;
 import java.util.stream.Collectors;
 
 import org.jetbrains.annotations.Nullable;
-import org.quiltmc.qsl.resource.loader.impl.StaticResourceManagerWrapper;
 import org.spongepowered.asm.mixin.Final;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Mutable;
@@ -40,11 +39,12 @@ import net.minecraft.resource.pack.ResourcePack;
 import net.minecraft.resource.pack.metadata.ResourceFilterMetadata;
 import net.minecraft.util.Identifier;
 
+import org.quiltmc.qsl.resource.loader.impl.StaticResourceManager;
 import org.quiltmc.qsl.resource.loader.impl.QuiltMultiPackResourceManagerHooks;
 import org.quiltmc.qsl.resource.loader.impl.ResourceLoaderImpl;
 
 @Mixin(MultiPackResourceManager.class)
-public abstract class MultiPackResourceManagerMixin implements QuiltMultiPackResourceManagerHooks, StaticResourceManagerWrapper {
+public abstract class MultiPackResourceManagerMixin implements QuiltMultiPackResourceManagerHooks {
 	@Mutable
 	@Shadow
 	@Final
@@ -61,6 +61,7 @@ public abstract class MultiPackResourceManagerMixin implements QuiltMultiPackRes
 	@Unique
 	private /*final*/ ResourceType quilt$type;
 
+	@SuppressWarnings("ConstantConditions")
 	@ModifyVariable(
 			method = "<init>",
 			at = @At(value = "INVOKE", target = "Ljava/util/List;copyOf(Ljava/util/Collection;)Ljava/util/List;", shift = At.Shift.BEFORE),
@@ -70,23 +71,25 @@ public abstract class MultiPackResourceManagerMixin implements QuiltMultiPackRes
 	private List<ResourcePack> quilt$createPackList(List<ResourcePack> packs, ResourceType type) {
 		this.quilt$type = type;
 
-		if(StaticResourceManagerWrapper.quilt$wrapAndCheck(this)) return packs;
-		else return packs.stream().mapMulti(ResourceLoaderImpl::flattenPacks).collect(Collectors.toCollection(ArrayList::new));
+		if (((Object) this) instanceof StaticResourceManager) return packs;
+		else {
+			return packs.stream().mapMulti(ResourceLoaderImpl::flattenPacks).collect(Collectors.toCollection(ArrayList::new));
+		}
 	}
 
 	@SuppressWarnings("ConstantConditions")
 	@Override
 	public void quilt$appendTopPacks() {
-		if(StaticResourceManagerWrapper.quilt$wrapAndCheck(this)) return;
+		if (((Object) this) instanceof StaticResourceManager) return;
 		if (!(this.packs instanceof ArrayList<ResourcePack>)) {
 			this.packs = new ArrayList<>(this.packs);
 		}
 		ResourceLoaderImpl.get(this.quilt$type).appendTopPacks((MultiPackResourceManager) (Object) this, this.packs::add);
 	}
-
+	@SuppressWarnings("ConstantConditions")
 	@Override
 	public void quilt$recomputeNamespaces() {
-		if(StaticResourceManagerWrapper.quilt$wrapAndCheck(this)) return;
+		if (((Object) this) instanceof StaticResourceManager) return;
 		this.namespaceManagers.clear();
 		List<String> namespaces = this.packs.stream().flatMap(pack -> pack.getNamespaces(this.quilt$type).stream()).distinct().toList();
 
