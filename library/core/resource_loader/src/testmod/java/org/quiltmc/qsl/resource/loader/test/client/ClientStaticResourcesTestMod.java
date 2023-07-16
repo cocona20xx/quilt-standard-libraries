@@ -10,7 +10,7 @@ import java.util.stream.Stream;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import net.minecraft.resource.MultiPackResourceManager;
+import net.minecraft.resource.ResourceManager;
 import net.minecraft.resource.ResourceType;
 import net.minecraft.util.Identifier;
 
@@ -22,8 +22,8 @@ public class ClientStaticResourcesTestMod implements ClientModInitializer {
 	public static final Logger LOGGER = LoggerFactory.getLogger("QuiltClientStaticResourcesTest");
 	@Override
 	public void onInitializeClient(ModContainer mod) {
-		MultiPackResourceManager clientManager = ResourceLoader.getStaticResourceManager(ResourceType.CLIENT_RESOURCES);
-		MultiPackResourceManager serverManager = ResourceLoader.getStaticResourceManager(ResourceType.SERVER_DATA);
+		ResourceManager clientManager = ResourceLoader.getStaticResourceManager(ResourceType.CLIENT_RESOURCES);
+		ResourceManager serverManager = ResourceLoader.getStaticResourceManager(ResourceType.SERVER_DATA);
 		try (BufferedReader reader = clientManager.openAsReader(new Identifier("cronch", "test_client.txt"))) {
 			Stream<String> stringStream = reader.lines();
 			List<String> strings = stringStream.collect(Collectors.toCollection((Supplier<List<String>>) ArrayList::new));

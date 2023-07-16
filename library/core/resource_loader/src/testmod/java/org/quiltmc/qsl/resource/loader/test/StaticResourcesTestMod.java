@@ -14,7 +14,7 @@ import net.minecraft.block.Block;
 import net.minecraft.block.Blocks;
 import net.minecraft.registry.Registries;
 import net.minecraft.registry.Registry;
-import net.minecraft.resource.MultiPackResourceManager;
+import net.minecraft.resource.ResourceManager;
 import net.minecraft.resource.Resource;
 import net.minecraft.resource.ResourceType;
 import net.minecraft.util.Identifier;
@@ -28,7 +28,7 @@ public class StaticResourcesTestMod implements ModInitializer {
 	@Override
 	public void onInitialize(ModContainer mod) {
 		try {
-			MultiPackResourceManager clientManager = ResourceLoader.getStaticResourceManager(ResourceType.CLIENT_RESOURCES);
+			ResourceManager clientManager = ResourceLoader.getStaticResourceManager(ResourceType.CLIENT_RESOURCES);
 			Resource cronch = clientManager.getResource(new Identifier("cronch", "test_client")).orElseThrow();
 			BufferedReader readerCronch = cronch.openBufferedReader();
 			LOGGER.error("{} (Reading this line should be impossible!)", readerCronch.readLine());
@@ -37,7 +37,7 @@ public class StaticResourcesTestMod implements ModInitializer {
 			LOGGER.info("As anticipated, clientside resource fetch failed on logical server. Exception: {}", e.toString());
 		}
 
-		MultiPackResourceManager staticManager = ResourceLoader.getStaticResourceManager(ResourceType.SERVER_DATA);
+		ResourceManager staticManager = ResourceLoader.getStaticResourceManager(ResourceType.SERVER_DATA);
 		LOGGER.info("Loaded static namespaces: {}", staticManager.getAllNamespaces());
 		Map<Identifier, Resource> blockRes = staticManager.findResources("add_block", identifier -> true);
 		Map<Identifier, JsonElement> blockElements = new HashMap<>();
