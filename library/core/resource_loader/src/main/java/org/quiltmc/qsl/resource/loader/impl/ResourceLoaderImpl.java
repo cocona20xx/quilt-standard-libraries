@@ -86,6 +86,7 @@ import org.quiltmc.qsl.resource.loader.mixin.VanillaDataPackProviderAccessor;
 @ApiStatus.Internal
 public final class ResourceLoaderImpl implements ResourceLoader {
 	private static final String STATIC_PACK_ROOT = "static";
+	private static final Set<String> STATIC_USERSPACE_IGNORED_FILES = Set.of(".DS_Store", "thumbs.db");
 	private static final Map<ResourceType, StaticResourceManager> STATIC_MANAGER_MAP = new EnumMap<>(ResourceType.class);
 	private static final Map<ResourceType, ResourceLoaderImpl> IMPL_MAP = new EnumMap<>(ResourceType.class);
 	/**
@@ -547,9 +548,12 @@ public final class ResourceLoaderImpl implements ResourceLoader {
 				if (pathAsFile.isFile()) {
 					if (pathAsFile.toPath().toString().endsWith(".zip")) {
 						returnList.add(new ZipResourcePack(n, pathAsFile, false));
-					} else if (!pathAsFile.getName().equals(".DS_Store")) {
-						//silently ignore filesystem helper files like .DS_Store
-						LOGGER.error("Files outside of packs are not supported by the Quilt Static Resource Manager. Loose file: {}", pathAsFile);
+					} else {
+						if (!STATIC_USERSPACE_IGNORED_FILES.contains(pathAsFile.getName())) {
+							//Ignores filesystem helper files, currently ignoring .DS_Store and thumbs.db
+							LOGGER.error("Files outside of packs are not supported by the Quilt Static Resource Manager. Loose file: {}", pathAsFile);
+							LOGGER.error("If the loose file above is a filesystem helper for the in-use Operating System, please make an issue report on the QSL github: https://github.com/QuiltMC/quilt-standard-libraries/issues");
+						}
 					}
 				} else if (pathAsFile.isDirectory()) {
 					returnList.add(new NioResourcePack(n, path, false));
