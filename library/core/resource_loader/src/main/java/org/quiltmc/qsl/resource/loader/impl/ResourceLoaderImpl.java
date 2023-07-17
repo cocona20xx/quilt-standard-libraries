@@ -549,17 +549,20 @@ public final class ResourceLoaderImpl implements ResourceLoader {
 					if (pathAsFile.toPath().toString().endsWith(".zip")) {
 						returnList.add(new ZipResourcePack(n, pathAsFile, false));
 					} else {
-						boolean fsHelper = false;
-						for (String fs : STATIC_USERSPACE_IGNORED_FILES) {
-							// Implementation detail: ._* and (some) *nix-derivative OSes (macOS, Linux distros, etc)
-							// ._* is a rare *nix filesystem helper file created to store file information normally placed in an extended attribute
-							// on HFS+ (Apple Native, typically found under macOS) or UFS (other *nix OSes) filesystems when interfacing with a filesystem
-							// that does NOT support such extended attributes (for instance, a FAT32 drive). Since these can have names of arbitrary lengths,
-							// the only way to detect them is via the shared prefix.
-							// Source: https://apple.stackexchange.com/a/14981
-							if (fs.equalsIgnoreCase(pathAsFile.getName()) || pathAsFile.getName().startsWith("._")) {
-								fsHelper = true;
-								break;
+						// Implementation detail: ._* and (some) *nix-derivative OSes (macOS, Linux distros, etc)
+						// ._* is a rare *nix filesystem helper file created to store file information normally placed in an extended attribute
+						// on HFS+ (Apple Native, typically found under macOS) or UFS (other *nix OSes) filesystems when interfacing with a filesystem
+						// that does NOT support such extended attributes (for instance, a FAT32 drive). Since these can have names of arbitrary lengths,
+						// the only way to detect them is via the shared prefix.
+						// Source: https://apple.stackexchange.com/a/14981
+						boolean fsHelper = pathAsFile.getName().startsWith("._");
+
+						if (!fsHelper) {
+							for (String fs : STATIC_USERSPACE_IGNORED_FILES) {
+								if (fs.equalsIgnoreCase(pathAsFile.getName())) {
+									fsHelper = true;
+									break;
+								}
 							}
 						}
 						if (!fsHelper) {
