@@ -52,12 +52,17 @@ public interface ResourceLoader {
 	}
 
 	/**
-	 * Gets the static resource manager for a given type.<br>
+	 * Gets the static resource manager for a given type.
+	 * <p>
 	 * Static resources are different from regular resources in that they
-	 * are available as soon as the manager is requested and are (theoretically) immutable.<br>
+	 * are available as soon as the manager is requested and are (theoretically) immutable.
+	 * <p>
 	 * It is <i>highly</i> recommended for mods to personally cache data they get from the provided manager in order to
-	 * prevent changes to userspace packs modifying data at runtime.
-	 * @param type the given resource type
+	 * prevent changes to user-space packs modifying data at runtime.
+	 * <p>
+	 * After the end of the initial boot process, as-in reaching the end of the start process of a server or of the client, the static resource manager may be closed and not re-used.
+	 *
+	 * @param type the type of resources expected from this resource manager
 	 * @return the static resource manager instance
 	 */
 	static @NotNull ResourceManager getStaticResourceManager(@NotNull ResourceType type) {

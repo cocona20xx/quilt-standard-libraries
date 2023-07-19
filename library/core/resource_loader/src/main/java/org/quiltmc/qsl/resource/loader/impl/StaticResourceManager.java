@@ -25,7 +25,8 @@ import net.minecraft.resource.ResourceType;
 import net.minecraft.resource.pack.ResourcePack;
 
 /**
- * Exists solely for determining whether a manager is involved in static resource loading or regular resource loading.<br>
+ * Exists solely for determining whether a manager is involved in static resource loading or regular resource loading.
+ * <p>
  * This is used to avoid activating certain mixins when they are not necessary.
  */
 @ApiStatus.Internal

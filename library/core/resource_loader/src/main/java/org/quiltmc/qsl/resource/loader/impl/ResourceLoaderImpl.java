@@ -541,10 +541,12 @@ public final class ResourceLoaderImpl implements ResourceLoader {
 	/* Static pack stuff */
 	private static List<ResourcePack> findUserStaticPacks() {
 		List<ResourcePack> returnList = new ArrayList<>();
+
 		try (Stream<Path> walkStream = Files.walk(QuiltLoader.getGameDir().resolve(STATIC_PACK_ROOT), 1)) {
 			for (Path path : walkStream.toList()) {
 				File pathAsFile = path.toFile();
 				String n = calcUserspacePackName(pathAsFile);
+
 				if (pathAsFile.isFile()) {
 					if (pathAsFile.toPath().toString().endsWith(".zip")) {
 						returnList.add(new ZipResourcePack(n, pathAsFile, false));
@@ -577,8 +579,10 @@ public final class ResourceLoaderImpl implements ResourceLoader {
 		} catch (IOException eio) {
 			LOGGER.error("IO Exception thrown while loading userspace static packs: {}", eio.toString());
 		}
+
 		return returnList;
 	}
+
 	private static String calcUserspacePackName(File packFile) {
 		int n = packFile.toPath().getNameCount();
 		return packFile.toPath().getName(n - 2) + "/" + packFile.toPath().getName(n - 1);

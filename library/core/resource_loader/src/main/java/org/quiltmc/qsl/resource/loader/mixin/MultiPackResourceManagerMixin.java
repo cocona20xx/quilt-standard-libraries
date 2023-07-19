@@ -86,6 +86,7 @@ public abstract class MultiPackResourceManagerMixin implements QuiltMultiPackRes
 		}
 		ResourceLoaderImpl.get(this.quilt$type).appendTopPacks((MultiPackResourceManager) (Object) this, this.packs::add);
 	}
+
 	@SuppressWarnings("ConstantConditions")
 	@Override
 	public void quilt$recomputeNamespaces() {
