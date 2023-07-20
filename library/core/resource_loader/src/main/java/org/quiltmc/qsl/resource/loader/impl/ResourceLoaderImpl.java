@@ -86,7 +86,10 @@ import org.quiltmc.qsl.resource.loader.mixin.VanillaDataPackProviderAccessor;
 @ApiStatus.Internal
 public final class ResourceLoaderImpl implements ResourceLoader {
 	private static final String STATIC_PACK_ROOT = "static";
-	private static final Set<String> STATIC_USERSPACE_IGNORED_FILES = Set.of(".DS_Store", "thumbs.db", "desktop.ini", ".desktop");
+	/**
+	 * Contains the names of various filesystem helper files in <i>all lower-case</i>, used to filter said files out of loose file detection.
+	 */
+	private static final Set<String> STATIC_USERSPACE_FILESYSTEM_HELPERS = Set.of(".ds_store", "thumbs.db", "desktop.ini", ".desktop");
 	private static final Map<ResourceType, StaticResourceManager> STATIC_MANAGER_MAP = new EnumMap<>(ResourceType.class);
 	private static final Map<ResourceType, ResourceLoaderImpl> IMPL_MAP = new EnumMap<>(ResourceType.class);
 	/**
@@ -557,17 +560,7 @@ public final class ResourceLoaderImpl implements ResourceLoader {
 						// that does NOT support such extended attributes (for instance, a FAT32 drive). Since these can have names of arbitrary lengths,
 						// the only way to detect them is via the shared prefix.
 						// Source: https://apple.stackexchange.com/a/14981
-						boolean fsHelper = pathAsFile.getName().startsWith("._");
-
-						if (!fsHelper) {
-							for (String fs : STATIC_USERSPACE_IGNORED_FILES) {
-								if (fs.equalsIgnoreCase(pathAsFile.getName())) {
-									fsHelper = true;
-									break;
-								}
-							}
-						}
-						if (!fsHelper) {
+						if (!pathAsFile.getName().startsWith("._") && !STATIC_USERSPACE_FILESYSTEM_HELPERS.contains(pathAsFile.getName().toLowerCase())) {
 							LOGGER.error("Files outside of packs are not supported by the Quilt Static Resource Manager. Loose file: {}", pathAsFile);
 							LOGGER.error("If the loose file above is a filesystem helper for the in-use Operating System, please make an issue report on the QSL github: https://github.com/QuiltMC/quilt-standard-libraries/issues");
 						}
