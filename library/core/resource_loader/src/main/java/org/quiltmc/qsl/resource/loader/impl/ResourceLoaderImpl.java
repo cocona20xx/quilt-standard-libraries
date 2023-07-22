@@ -560,7 +560,7 @@ public final class ResourceLoaderImpl implements ResourceLoader {
 						// that does NOT support such extended attributes (for instance, a FAT32 drive). Since these can have names of arbitrary lengths,
 						// the only way to detect them is via the shared prefix.
 						// Source: https://apple.stackexchange.com/a/14981
-						if (!pathAsFile.getName().startsWith("._") && !STATIC_USERSPACE_FILESYSTEM_HELPERS.contains(pathAsFile.getName().toLowerCase())) {
+						if (!pathAsFile.getName().startsWith("._") && !STATIC_USERSPACE_FILESYSTEM_HELPERS.contains(pathAsFile.getName().toLowerCase(Locale.ROOT))) {
 							LOGGER.error("Files outside of packs are not supported by the Quilt Static Resource Manager. Loose file: {}", pathAsFile);
 							LOGGER.error("If the loose file above is a filesystem helper for the in-use Operating System, please make an issue report on the QSL github: https://github.com/QuiltMC/quilt-standard-libraries/issues");
 						}
