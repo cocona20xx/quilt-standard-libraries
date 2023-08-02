@@ -1,0 +1,17 @@
+plugins {
+	id("qsl.module")
+}
+qslModule {
+	name = "Quilt Data-Driven Content API"
+	moduleName = "ddc"
+	id = "quilt_ddc"
+	description = "Creation of statically registered content through data."
+	moduleDependencies {
+		core {
+			api("resource_loader")
+			api("qsl_base")
+			api("registry")
+		}
+	}
+	accessWidener()
+}

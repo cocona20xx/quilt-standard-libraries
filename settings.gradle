@@ -61,3 +61,6 @@ def library(String library) {
 		}
 	}
 }
+include 'library:data:data-driven-content'
+findProject(':library:data:data-driven-content')?.name = 'data-driven-content'
+
