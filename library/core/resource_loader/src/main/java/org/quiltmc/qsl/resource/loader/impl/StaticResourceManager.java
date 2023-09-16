@@ -25,7 +25,8 @@ import net.minecraft.resource.ResourceType;
 import net.minecraft.resource.pack.ResourcePack;
 
 /**
- * Exists solely for determining whether a manager is involved in static resource loading or regular resource loading.
+ * Exists primarily for determining whether a manager is involved in static resource loading or regular resource loading,
+ * and also prevents the MultiPackResourceManager from being closed.
  * <p>
  * This is used to avoid activating certain mixins when they are not necessary.
  */
@@ -33,5 +34,17 @@ import net.minecraft.resource.pack.ResourcePack;
 public class StaticResourceManager extends MultiPackResourceManager {
 	public StaticResourceManager(ResourceType type, List<ResourcePack> packs) {
 		super(type, packs);
+	}
+
+	/**
+	 * Forbids the StaticResourceManager instance from being closed (by throwing a RuntimeException) as a sanity check of sorts.
+	 * <p>
+	 * Ultimately, this method should never be called by consumers of the API,
+	 * as the two StaticResourceManager instances are cast to {@link net.minecraft.resource.ResourceManager} when provided,
+	 * and ResourceManager does <i>not</i> extend {@link AutoCloseable}.
+ 	 */
+	@Override
+	public void close() {
+		throw new RuntimeException("StaticResourceManager instances cannot be closed!");
 	}
 }

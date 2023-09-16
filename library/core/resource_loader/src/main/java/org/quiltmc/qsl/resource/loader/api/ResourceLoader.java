@@ -59,8 +59,6 @@ public interface ResourceLoader {
 	 * <p>
 	 * It is <i>highly</i> recommended for mods to personally cache data they get from the provided manager in order to
 	 * prevent changes to user-space packs modifying data at runtime.
-	 * <p>
-	 * After the end of the initial boot process, as-in reaching the end of the start process of a server or of the client, the static resource manager may be closed and not re-used.
 	 *
 	 * @param type the type of resources expected from this resource manager
 	 * @return the static resource manager instance
