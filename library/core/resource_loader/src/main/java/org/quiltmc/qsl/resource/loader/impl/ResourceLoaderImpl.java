@@ -57,7 +57,10 @@ import net.minecraft.resource.pack.ZipResourcePack;
 import net.minecraft.resource.MultiPackResourceManager;
 import net.minecraft.resource.ResourceReloader;
 import net.minecraft.resource.ResourceType;
-import net.minecraft.resource.pack.metadata.ResourceMetadataReader;
+import net.minecraft.resource.pack.ResourcePack;
+import net.minecraft.resource.pack.ResourcePackProfile;
+import net.minecraft.resource.pack.ResourcePackProvider;
+import net.minecraft.resource.pack.metadata.ResourceMetadataSectionReader;
 import net.minecraft.text.Text;
 import net.minecraft.util.Identifier;
 import net.minecraft.util.JsonHelper;
@@ -141,23 +144,23 @@ public final class ResourceLoaderImpl implements ResourceLoader {
 		});
 	}
 
-	public static <T> @Nullable T parseMetadata(ResourceMetadataReader<T> metaReader, ResourcePack pack, InputStream inputStream) {
+	public static <T> @Nullable T parseMetadata(ResourceMetadataSectionReader<T> metaSectionReader, ResourcePack pack, InputStream inputStream) {
 		JsonObject json;
 
 		try (var reader = new BufferedReader(new InputStreamReader(inputStream, StandardCharsets.UTF_8))) {
 			json = JsonHelper.deserialize(reader);
 		} catch (Exception e) {
-			LOGGER.error("Couldn't load {} metadata from pack \"{}\":", metaReader.getKey(), pack.getName(), e);
+			LOGGER.error("Couldn't load {} metadata from pack \"{}\":", metaSectionReader.getKey(), pack.getName(), e);
 			return null;
 		}
 
-		if (!json.has(metaReader.getKey())) {
+		if (!json.has(metaSectionReader.getKey())) {
 			return null;
 		} else {
 			try {
-				return metaReader.fromJson(JsonHelper.getObject(json, metaReader.getKey()));
+				return metaSectionReader.fromJson(JsonHelper.getObject(json, metaSectionReader.getKey()));
 			} catch (Exception e) {
-				LOGGER.error("Couldn't load {} metadata from pack \"{}\":", metaReader.getKey(), pack.getName(), e);
+				LOGGER.error("Couldn't load {} metadata from pack \"{}\":", metaSectionReader.getKey(), pack.getName(), e);
 				return null;
 			}
 		}
@@ -505,7 +508,7 @@ public final class ResourceLoaderImpl implements ResourceLoader {
 			// Add the built-in pack only if namespaces for the specified resource type are present.
 			if (!pack.getNamespaces(type).isEmpty()) {
 				// Make the resource pack profile for built-in pack, should never be always enabled.
-				var profile = QuiltBuiltinResourcePackProfile.of(pack);
+				var profile = ModResourcePackUtil.makeBuiltinPackProfile(pack);
 
 				if (profile != null) {
 					profileAdder.accept(profile);
