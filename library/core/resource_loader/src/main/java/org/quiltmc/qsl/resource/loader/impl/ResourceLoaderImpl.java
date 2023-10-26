@@ -57,9 +57,6 @@ import net.minecraft.resource.pack.ZipResourcePack;
 import net.minecraft.resource.MultiPackResourceManager;
 import net.minecraft.resource.ResourceReloader;
 import net.minecraft.resource.ResourceType;
-import net.minecraft.resource.pack.ResourcePack;
-import net.minecraft.resource.pack.ResourcePackProfile;
-import net.minecraft.resource.pack.ResourcePackProvider;
 import net.minecraft.resource.pack.metadata.ResourceMetadataSectionReader;
 import net.minecraft.text.Text;
 import net.minecraft.util.Identifier;
@@ -555,7 +552,8 @@ public final class ResourceLoaderImpl implements ResourceLoader {
 
 				if (pathAsFile.isFile()) {
 					if (pathAsFile.toPath().toString().endsWith(".zip")) {
-						returnList.add(new ZipResourcePack(n, pathAsFile, false));
+						ZipResourcePack.Factory zipFactory = new ZipResourcePack.Factory(path, false);
+						returnList.add(zipFactory.openPrimary(n));
 					} else {
 						// Implementation detail: ._* and (some) *nix-derivative OSes (macOS, Linux distros, etc)
 						// ._* is a rare *nix filesystem helper file created to store file information normally placed in an extended attribute
