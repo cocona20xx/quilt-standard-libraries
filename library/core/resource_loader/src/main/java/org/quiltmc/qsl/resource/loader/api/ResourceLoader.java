@@ -24,8 +24,8 @@ import org.jetbrains.annotations.NotNull;
 
 import net.minecraft.resource.ResourceManager;
 import net.minecraft.resource.ResourceType;
+import net.minecraft.resource.pack.PackProvider;
 import net.minecraft.resource.pack.ResourcePack;
-import net.minecraft.resource.pack.ResourcePackProvider;
 import net.minecraft.text.Text;
 import net.minecraft.util.Identifier;
 
@@ -91,33 +91,33 @@ public interface ResourceLoader {
 	void addReloaderOrdering(@NotNull Identifier firstReloader, @NotNull Identifier secondReloader);
 
 	/**
-	 * Registers a resource pack profile provider.
+	 * Registers a pack profile provider.
 	 * <p>
-	 * A resource pack profile means any provided resource packs will show up in the resource pack selection screen.
-	 * Always fired <i>after</i> the built-in resource pack providers.
+	 * A pack profile means any provided resource packs will show up in the resource pack selection screen.
+	 * Always fired <i>after</i> the built-in pack providers.
 	 *
 	 * @param provider the provider
 	 */
-	void registerResourcePackProfileProvider(@NotNull ResourcePackProvider provider);
+	void registerPackProfileProvider(@NotNull PackProvider provider);
 
 	/**
-	 * {@return the registration of default resource packs event}
+	 * {@return the registration of default packs event}
 	 * <p>
-	 * This event is triggered when the default resources are created and allow to register additional resource packs
-	 * that are displayed to the user as the {@code "Default"} resource pack.
-	 * Added packs are added before mod resource packs, meaning mod resources will override added packs' resources.
+	 * This event is triggered when the default resources are created and allow to register additional packs
+	 * that are displayed to the user as the {@code "Default"} pack.
+	 * Added packs are added before mod packs, meaning mod resources will override added packs' resources.
 	 */
 	@Contract(pure = true)
-	@NotNull Event<ResourcePackRegistrationContext.Callback> getRegisterDefaultResourcePackEvent();
+	@NotNull Event<PackRegistrationContext.Callback> getRegisterDefaultPackEvent();
 
 	/**
-	 * {@return the registration of top resource packs event}
+	 * {@return the registration of top packs event}
 	 * <p>
-	 * This event is triggered once all default and user resource packs are added.
-	 * It allows to add additional resource packs that can override any other resource packs.
+	 * This event is triggered once all default and user packs are added.
+	 * It allows to add additional packs that can override any other packs.
 	 */
 	@Contract(pure = true)
-	@NotNull Event<ResourcePackRegistrationContext.Callback> getRegisterTopResourcePackEvent();
+	@NotNull Event<PackRegistrationContext.Callback> getRegisterTopPackEvent();
 
 	/**
 	 * Creates a new resource pack based on a {@link Path} as its root.
@@ -128,13 +128,13 @@ public interface ResourceLoader {
 	 * @param rootPath       the root path of this resource pack
 	 * @param activationType the activation type hint of this resource pack
 	 * @return a new resource pack instance
-	 * @see #newFileSystemResourcePack(Identifier, Path, ResourcePackActivationType, Text)
-	 * @see #newFileSystemResourcePack(Identifier, ModContainer, Path, ResourcePackActivationType)
-	 * @see #newFileSystemResourcePack(Identifier, ModContainer, Path, ResourcePackActivationType, Text)
+	 * @see #newFileSystemPack(Identifier, Path, PackActivationType, Text)
+	 * @see #newFileSystemPack(Identifier, ModContainer, Path, PackActivationType)
+	 * @see #newFileSystemPack(Identifier, ModContainer, Path, PackActivationType, Text)
 	 */
-	default @NotNull ResourcePack newFileSystemResourcePack(@NotNull Identifier id, @NotNull Path rootPath,
-			ResourcePackActivationType activationType) {
-		return this.newFileSystemResourcePack(id, rootPath, activationType, ResourceLoaderImpl.getBuiltinPackDisplayNameFromId(id));
+	default @NotNull ResourcePack newFileSystemPack(@NotNull Identifier id, @NotNull Path rootPath,
+			PackActivationType activationType) {
+		return this.newFileSystemPack(id, rootPath, activationType, ResourceLoaderImpl.getBuiltinPackDisplayNameFromId(id));
 	}
 
 	/**
@@ -147,16 +147,16 @@ public interface ResourceLoader {
 	 * @param activationType the activation type hint of this resource pack
 	 * @param displayName    the display name of the resource pack
 	 * @return a new resource pack instance
-	 * @see #newFileSystemResourcePack(Identifier, Path, ResourcePackActivationType)
-	 * @see #newFileSystemResourcePack(Identifier, ModContainer, Path, ResourcePackActivationType)
-	 * @see #newFileSystemResourcePack(Identifier, ModContainer, Path, ResourcePackActivationType, Text)
+	 * @see #newFileSystemPack(Identifier, Path, PackActivationType)
+	 * @see #newFileSystemPack(Identifier, ModContainer, Path, PackActivationType)
+	 * @see #newFileSystemPack(Identifier, ModContainer, Path, PackActivationType, Text)
 	 */
-	default @NotNull ResourcePack newFileSystemResourcePack(@NotNull Identifier id, @NotNull Path rootPath,
-			ResourcePackActivationType activationType, @NotNull Text displayName) {
+	default @NotNull ResourcePack newFileSystemPack(@NotNull Identifier id, @NotNull Path rootPath,
+													PackActivationType activationType, @NotNull Text displayName) {
 		var container = QuiltLoader.getModContainer(id.getNamespace())
 				.orElseThrow(() ->
 						new IllegalArgumentException("No mod with ID '" + id.getNamespace() + "' could be found"));
-		return this.newFileSystemResourcePack(id, container, rootPath, activationType, displayName);
+		return this.newFileSystemPack(id, container, rootPath, activationType, displayName);
 	}
 
 	/**
@@ -169,13 +169,13 @@ public interface ResourceLoader {
 	 * @param rootPath       the root path of this resource pack
 	 * @param activationType the activation type hint of this resource pack
 	 * @return a new resource pack instance
-	 * @see #newFileSystemResourcePack(Identifier, Path, ResourcePackActivationType)
-	 * @see #newFileSystemResourcePack(Identifier, Path, ResourcePackActivationType, Text)
-	 * @see #newFileSystemResourcePack(Identifier, ModContainer, Path, ResourcePackActivationType, Text)
+	 * @see #newFileSystemPack(Identifier, Path, PackActivationType)
+	 * @see #newFileSystemPack(Identifier, Path, PackActivationType, Text)
+	 * @see #newFileSystemPack(Identifier, ModContainer, Path, PackActivationType, Text)
 	 */
-	default @NotNull ResourcePack newFileSystemResourcePack(@NotNull Identifier id, @NotNull ModContainer owner, @NotNull Path rootPath,
-			ResourcePackActivationType activationType) {
-		return this.newFileSystemResourcePack(id, owner, rootPath, activationType, ResourceLoaderImpl.getBuiltinPackDisplayNameFromId(id));
+	default @NotNull ResourcePack newFileSystemPack(@NotNull Identifier id, @NotNull ModContainer owner, @NotNull Path rootPath,
+			PackActivationType activationType) {
+		return this.newFileSystemPack(id, owner, rootPath, activationType, ResourceLoaderImpl.getBuiltinPackDisplayNameFromId(id));
 	}
 
 	/**
@@ -189,12 +189,12 @@ public interface ResourceLoader {
 	 * @param activationType the activation type hint of this resource pack
 	 * @param displayName    the display name of the resource pack
 	 * @return a new resource pack instance
-	 * @see #newFileSystemResourcePack(Identifier, Path, ResourcePackActivationType)
-	 * @see #newFileSystemResourcePack(Identifier, Path, ResourcePackActivationType, Text)
-	 * @see #newFileSystemResourcePack(Identifier, ModContainer, Path, ResourcePackActivationType)
+	 * @see #newFileSystemPack(Identifier, Path, PackActivationType)
+	 * @see #newFileSystemPack(Identifier, Path, PackActivationType, Text)
+	 * @see #newFileSystemPack(Identifier, ModContainer, Path, PackActivationType)
 	 */
-	@NotNull ResourcePack newFileSystemResourcePack(@NotNull Identifier id, @NotNull ModContainer owner, @NotNull Path rootPath,
-			ResourcePackActivationType activationType, @NotNull Text displayName);
+	@NotNull ResourcePack newFileSystemPack(@NotNull Identifier id, @NotNull ModContainer owner, @NotNull Path rootPath,
+											PackActivationType activationType, @NotNull Text displayName);
 
 	/**
 	 * Registers a built-in resource pack.
@@ -214,12 +214,12 @@ public interface ResourceLoader {
 	 * @param activationType the activation type of the resource pack
 	 * @return {@code true} if the resource pack was successfully registered, or {@code false} otherwise
 	 * @throws IllegalArgumentException if a mod with the corresponding namespace given in id cannot be found
-	 * @see #registerBuiltinResourcePack(Identifier, ResourcePackActivationType, Text)
-	 * @see #registerBuiltinResourcePack(Identifier, ModContainer, ResourcePackActivationType)
-	 * @see #registerBuiltinResourcePack(Identifier, ModContainer, ResourcePackActivationType, Text)
+	 * @see #registerBuiltinPack(Identifier, PackActivationType, Text)
+	 * @see #registerBuiltinPack(Identifier, ModContainer, PackActivationType)
+	 * @see #registerBuiltinPack(Identifier, ModContainer, PackActivationType, Text)
 	 */
-	static boolean registerBuiltinResourcePack(@NotNull Identifier id, @NotNull ResourcePackActivationType activationType) {
-		return registerBuiltinResourcePack(id, activationType, ResourceLoaderImpl.getBuiltinPackDisplayNameFromId(id));
+	static boolean registerBuiltinPack(@NotNull Identifier id, @NotNull PackActivationType activationType) {
+		return registerBuiltinPack(id, activationType, ResourceLoaderImpl.getBuiltinPackDisplayNameFromId(id));
 	}
 
 	/**
@@ -241,15 +241,15 @@ public interface ResourceLoader {
 	 * @param displayName    the display name of the resource pack
 	 * @return {@code true} if the resource pack was successfully registered, or {@code false} otherwise
 	 * @throws IllegalArgumentException if a mod with the corresponding namespace given in id cannot be found
-	 * @see #registerBuiltinResourcePack(Identifier, ResourcePackActivationType)
-	 * @see #registerBuiltinResourcePack(Identifier, ModContainer, ResourcePackActivationType)
-	 * @see #registerBuiltinResourcePack(Identifier, ModContainer, ResourcePackActivationType, Text)
+	 * @see #registerBuiltinPack(Identifier, PackActivationType)
+	 * @see #registerBuiltinPack(Identifier, ModContainer, PackActivationType)
+	 * @see #registerBuiltinPack(Identifier, ModContainer, PackActivationType, Text)
 	 */
-	static boolean registerBuiltinResourcePack(@NotNull Identifier id, @NotNull ResourcePackActivationType activationType, Text displayName) {
+	static boolean registerBuiltinPack(@NotNull Identifier id, @NotNull PackActivationType activationType, Text displayName) {
 		var container = QuiltLoader.getModContainer(id.getNamespace())
 				.orElseThrow(() ->
 						new IllegalArgumentException("No mod with mod id " + id.getNamespace() + " could be found"));
-		return registerBuiltinResourcePack(id, container, activationType, displayName);
+		return registerBuiltinPack(id, container, activationType, displayName);
 	}
 
 	/**
@@ -268,13 +268,13 @@ public interface ResourceLoader {
 	 * @param container      the mod container
 	 * @param activationType the activation type of the resource pack
 	 * @return {@code true} if the resource pack was successfully registered, or {@code false} otherwise
-	 * @see #registerBuiltinResourcePack(Identifier, ResourcePackActivationType)
-	 * @see #registerBuiltinResourcePack(Identifier, ResourcePackActivationType, Text)
-	 * @see #registerBuiltinResourcePack(Identifier, ModContainer, ResourcePackActivationType, Text)
+	 * @see #registerBuiltinPack(Identifier, PackActivationType)
+	 * @see #registerBuiltinPack(Identifier, PackActivationType, Text)
+	 * @see #registerBuiltinPack(Identifier, ModContainer, PackActivationType, Text)
 	 */
-	static boolean registerBuiltinResourcePack(@NotNull Identifier id, @NotNull ModContainer container,
-			@NotNull ResourcePackActivationType activationType) {
-		return registerBuiltinResourcePack(id, container, activationType, ResourceLoaderImpl.getBuiltinPackDisplayNameFromId(id));
+	static boolean registerBuiltinPack(@NotNull Identifier id, @NotNull ModContainer container,
+			@NotNull PackActivationType activationType) {
+		return registerBuiltinPack(id, container, activationType, ResourceLoaderImpl.getBuiltinPackDisplayNameFromId(id));
 	}
 
 	/**
@@ -294,13 +294,13 @@ public interface ResourceLoader {
 	 * @param activationType the activation type of the resource pack
 	 * @param displayName    the display name of the resource pack
 	 * @return {@code true} if the resource pack was successfully registered, or {@code false} otherwise
-	 * @see #registerBuiltinResourcePack(Identifier, ResourcePackActivationType)
-	 * @see #registerBuiltinResourcePack(Identifier, ResourcePackActivationType, Text)
-	 * @see #registerBuiltinResourcePack(Identifier, ModContainer, ResourcePackActivationType)
+	 * @see #registerBuiltinPack(Identifier, PackActivationType)
+	 * @see #registerBuiltinPack(Identifier, PackActivationType, Text)
+	 * @see #registerBuiltinPack(Identifier, ModContainer, PackActivationType)
 	 */
-	static boolean registerBuiltinResourcePack(@NotNull Identifier id, @NotNull ModContainer container,
-			@NotNull ResourcePackActivationType activationType, Text displayName) {
-		return ResourceLoaderImpl.registerBuiltinResourcePack(id, "resourcepacks/" + id.getPath(), container,
+	static boolean registerBuiltinPack(@NotNull Identifier id, @NotNull ModContainer container,
+									   @NotNull PackActivationType activationType, Text displayName) {
+		return ResourceLoaderImpl.registerBuiltinPack(id, "resourcepacks/" + id.getPath(), container,
 				activationType, displayName);
 	}
 }
