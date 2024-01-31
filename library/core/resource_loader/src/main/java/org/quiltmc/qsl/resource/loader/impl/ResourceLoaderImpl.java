@@ -43,6 +43,7 @@ import it.unimi.dsi.fastutil.objects.Object2ObjectOpenHashMap;
 import it.unimi.dsi.fastutil.objects.ObjectOpenHashSet;
 import it.unimi.dsi.fastutil.objects.Reference2ObjectOpenHashMap;
 import net.fabricmc.api.EnvType;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.slf4j.Logger;
@@ -60,6 +61,8 @@ import net.minecraft.util.Identifier;
 import net.minecraft.util.JsonHelper;
 import net.minecraft.util.Language;
 import net.minecraft.util.Pair;
+import net.minecraft.resource.pack.NioResourcePack;
+import net.minecraft.resource.pack.ZipResourcePack;
 
 import org.quiltmc.loader.api.ModContainer;
 import org.quiltmc.loader.api.ModMetadata;
@@ -134,7 +137,7 @@ public final class ResourceLoaderImpl implements ResourceLoader {
 	public static StaticResourceManager getStaticResourceManager(ResourceType type) {
 		return STATIC_MANAGER_MAP.computeIfAbsent(type, passedType -> {
 			List<ResourcePack> packs = findUserStaticPacks();
-			appendModResourcePacks(packs, passedType, STATIC_PACK_ROOT);
+			appendModPacks(packs, passedType, STATIC_PACK_ROOT);
 			return new StaticResourceManager(passedType, packs);
 		});
 	}
@@ -553,7 +556,7 @@ public final class ResourceLoaderImpl implements ResourceLoader {
 						ZipResourcePack.Factory zipFactory = new ZipResourcePack.Factory(path, false);
 						returnList.add(zipFactory.openPrimary(n));
 					} else {
-						// Implementation detail: ._* and (some) *nix-derivative OSes (macOS, Linux distros, etc)
+						// Implementation detail: ._* and (some) *nix-derivative OSes (macOS, Linux distros, etc.)
 						// ._* is a rare *nix filesystem helper file created to store file information normally placed in an extended attribute
 						// on HFS+ (Apple Native, typically found under macOS) or UFS (other *nix OSes) filesystems when interfacing with a filesystem
 						// that does NOT support such extended attributes (for instance, a FAT32 drive). Since these can have names of arbitrary lengths,
