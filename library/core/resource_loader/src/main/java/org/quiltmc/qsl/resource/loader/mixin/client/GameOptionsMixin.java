@@ -50,7 +50,7 @@ public abstract class GameOptionsMixin {
 
 	/**
 	 * Represents the available resource packs, similar to how data packs work.
-	 * This allow to keep track of resource packs that are present but forcefully disabled for built-in resource packs.
+	 * This allows keeping track of resource packs that are present but forcefully disabled for built-in resource packs.
 	 */
 	@Unique
 	private List<String> quilt$availableResourcePacks = new ArrayList<>();
